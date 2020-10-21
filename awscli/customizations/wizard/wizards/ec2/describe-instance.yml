@@ -1,0 +1,25 @@
+version: "0.1"
+title: Describe an EC2 instance
+description: This wizard will describe an EC2 instance for you
+plan:
+  basics:
+    values:
+      existing_instances:
+        type: apicall
+        operation: ec2.DescribeInstances
+        params: {}
+        # Not every instance will be tagged with Name (or something else human recognisable)
+        # so we show the instance ID and the Name tag where possible, with it being coerced
+        # to "null" where the Name tag isn't populated
+        query: "sort_by(Reservations[].Instances[].{display: join(` - `, [InstanceId, to_string(Tags[?Key==`Name`].Value | [0])]), actual_value: InstanceId}, &display)"
+      instance_id:
+        type: prompt
+        description: Select the instance to describe
+        choices: existing_instances
+execute:
+  default:
+    - type: apicall
+      operation: ec2.DescribeInstances
+      params:
+        InstanceIds:
+          - "{instance_id}"
